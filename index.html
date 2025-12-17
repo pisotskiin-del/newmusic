@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Музыкальная открытка с салютом</title>
+<style>
+body {
+  margin: 0;
+  background: black;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+button {
+  position: relative;
+  z-index: 10;
+  margin-top: 40vh;
+  padding: 15px 30px;
+  font-size: 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+}
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+</style>
+</head>
+<body>
+
+<h1>🎉 Поздравляем! 🎉</h1>
+<button id="startBtn" onclick="start()">▶ Включить музыку</button>
+<audio id="music" src="music.mp3"></audio>
+<canvas id="fireworks"></canvas>
+
+<script>
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+let particles = [];
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.vx = (Math.random() - 0.5) * 6;
+    this.vy = (Math.random() - 0.5) * 6;
+    this.alpha = 1;
+    this.life = 100;
+    this.size = Math.random() * 3 + 2;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.05;
+    this.alpha -= 0.015;
+    this.life--;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function launchFirework(x, y) {
+  const color = `hsl(${Math.random()*360},100%,60%)`;
+  for (let i = 0; i < 60; i++) {
+    particles.push(new Particle(x, y, color));
+  }
+}
+
+function animate() {
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// 🔹 ГЛОБАЛЬНАЯ функция для кнопки
+function start() {
+  const startBtn = document.getElementById('startBtn');
+  startBtn.style.display = 'none';
+
+  const music = document.getElementById('music');
+  music.play().catch(err => {
+    console.log("Ошибка воспроизведения музыки:", err);
+    alert("Браузер заблокировал воспроизведение. Попробуйте кликнуть ещё раз.");
+  });
+
+  let lastFire = 0;
+  music.addEventListener('timeupdate', () => {
+    const beat = 0.6;
+    if (music.currentTime - lastFire >= beat) {
+      launchFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
+      lastFire = music.currentTime;
+    }
+  });
+}
+</script>
+
+</body>
+</html>
